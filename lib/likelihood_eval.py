@@ -146,11 +146,11 @@ def compute_masked_likelihood(mu, data, mask, likelihood_func):
 	for i in range(n_traj_samples):
 		for k in range(n_traj):
 			for j in range(n_dims):
-				data_masked = torch.masked_select(data[i,k,:,j], mask[i,k,:,j].byte())
+				data_masked = torch.masked_select(data[i,k,:,j], mask[i,k,:,j].bool())
 				
 				#assert(torch.sum(data_masked == 0.) < 10)
 
-				mu_masked = torch.masked_select(mu[i,k,:,j], mask[i,k,:,j].byte())
+				mu_masked = torch.masked_select(mu[i,k,:,j], mask[i,k,:,j].bool())
 				log_prob = likelihood_func(mu_masked, data_masked, indices = (i,k,j))
 				res.append(log_prob)
 	# shape: [n_traj*n_traj_samples, 1]

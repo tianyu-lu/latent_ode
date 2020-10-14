@@ -22,6 +22,80 @@ from person_activity import PersonActivity, variable_time_collate_fn_activity
 from sklearn import model_selection
 import random
 
+### Data for Repressilator ###
+
+class Lambda(nn.Module):
+
+    def forward(self, t, s):
+        m1 = s[0,0]
+        p1 = s[0,1]
+        m2 = s[0,2]
+        p2 = s[0,3]
+        m3 = s[0,4]
+        p3 = s[0,5]
+
+        m1ddt = alpha0 + alpha/(1+p3**n) - m1
+        p1ddt = beta*(m1-p1)
+        m2ddt = alpha0 + alpha/(1+p1**n) - m2
+        p2ddt = beta*(m2-p2)
+        m3ddt = alpha0 + alpha/(1+p2**n) - m3
+        p3ddt = beta*(m3-p3)
+
+        return torch.tensor([[m1ddt, p1ddt, m2ddt, p2ddt, m3ddt, p3ddt]])
+
+class Hill(nn.Module):
+
+    def forward(self, p):
+        n = 2
+        return 1/(1 + p**n)
+
+hill_fn = Hill()
+alpha0 = 60*(5e-4) 
+alpha = 60*(5-alpha0)
+beta = 0.2
+class Repressilator(nn.Module):
+    def __init__(self):
+        super(Repressilator, self).__init__()
+        self.W1 = torch.tensor([[-1,0,0,0,0,0], [beta,-beta,0,0,0,0], 
+                                [0,0,-1,0,0,0], [0,0,beta,-beta,0,0], 
+                                [0,0,0,0,-1,0], [0,0,0,0,beta,-beta]])
+        self.W2 = torch.tensor([[0,0,0,0,0,alpha], [0,0,0,0,0,0], 
+                                [0,alpha,0,0,0,0], [0,0,0,0,0,0], 
+                                [0,0,0,alpha,0,0], [0,0,0,0,0,0]])
+        self.b = torch.tensor([alpha0, 0,alpha0, 0,alpha0, 0]).reshape(6,1)
+
+    def forward(self, t, s):
+        H = hill_fn(s)
+        out = self.W1 @ s.T + self.W2 @ H.T + self.b
+        return out.reshape(1,6)
+
+from torchdiffeq import odeint_adjoint as odeint
+
+# Todo: 1. generalize training data to multiple initial conditions
+#		2. include at least one full cycle but irregularly sampled
+def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05):
+    s0 = torch.tensor([[0.2,  0.1, 0.3, 0.1, 0.4, 0.5]]) # [m1 p1 m2 p2 m3 p3]
+    # s0s = []
+    # for _ in range(5):
+    #     s0s.append(150*torch.rand(6).reshape(1,6))
+    # t = torch.linspace(0., 1000., 10000)
+    t = time_steps_extrap
+
+    with torch.no_grad():
+        s = odeint(Repressilator(), s0, t, method='dopri5')
+
+    s = s.squeeze()
+    gfp = s[:,5]
+    gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
+
+    data = torch.zeros(n_samples, 100, 1)
+
+    for i in range(n_samples):
+        start = int(random.random()*(10000 - 100))
+        data[i] = gfp[start : start+100].reshape(-1,1)
+
+    return data
+
 #####################################################################################################
 def parse_datasets(args, device):
 	
@@ -211,8 +285,12 @@ def parse_datasets(args, device):
 	if dataset_obj is None:
 		raise Exception("Unknown dataset: {}".format(dataset_name))
 
-	dataset = dataset_obj.sample_traj(time_steps_extrap, n_samples = args.n, 
-		noise_weight = args.noise_weight)
+	if dataset_name == "periodic":
+		dataset = dataset_obj.sample_traj(time_steps_extrap, n_samples = args.n, 
+			noise_weight = args.noise_weight)
+	elif dataset_name == "repressilator":
+		time_steps_extrap = torch.linspace(0., 1000., 10000)
+		dataset = sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05)
 
 	# Process small datasets
 	dataset = dataset.to(device)

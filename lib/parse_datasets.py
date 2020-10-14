@@ -78,8 +78,8 @@ def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05):
     # s0s = []
     # for _ in range(5):
     #     s0s.append(150*torch.rand(6).reshape(1,6))
-    # t = torch.linspace(0., 1000., 10000)
-    t = time_steps_extrap
+    t = torch.linspace(0., 1000., 10000)
+    # t = time_steps_extrap
 
     with torch.no_grad():
         s = odeint(Repressilator(), s0, t, method='dopri5')
@@ -91,8 +91,9 @@ def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05):
     data = torch.zeros(n_samples, 100, 1)
 
     for i in range(n_samples):
-        start = int(random.random()*(10000 - 100))
-        data[i] = gfp[start : start+100].reshape(-1,1)
+        start = int(random.random()*(10000 - 1000))
+        gfp_data = gfp[start : start+1000]
+        data[i] = gfp_data[::10].reshape(-1,1)
 
     return data
 
@@ -289,7 +290,7 @@ def parse_datasets(args, device):
 		dataset = dataset_obj.sample_traj(time_steps_extrap, n_samples = args.n, 
 			noise_weight = args.noise_weight)
 	elif dataset_name == "repressilator":
-		time_steps_extrap = torch.linspace(0., 1000., 10000)
+		time_steps_extrap = torch.linspace(0., 100., 100)
 		dataset = sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05)
 
 	# Process small datasets

@@ -323,7 +323,11 @@ class Visualizations():
 			# sample at the original time points
 			time_steps_to_predict = utils.linspace_vector(time_steps[0], time_steps[-1], 100).to(device)
 
-		reconstructions, info = model.get_reconstruction(time_steps_to_predict, 
+		# print(observed_time_steps)
+		# print(time_steps_to_predict)
+		new_ts = torch.cat((observed_time_steps, time_steps_to_predict), 0)
+
+		reconstructions, info = model.get_reconstruction(new_ts, 
 			observed_data, observed_time_steps, mask = observed_mask, n_traj_samples = 10)
 
 		n_traj_to_show = 3
@@ -355,13 +359,13 @@ class Visualizations():
 				color = cmap(2))
 			# Plot reconstructions
 			plot_trajectories(self.ax_traj[traj_id],
-				reconstructions_for_plotting[traj_id].unsqueeze(0), time_steps_to_predict, 
+				reconstructions_for_plotting[traj_id].unsqueeze(0), new_ts, 
 				min_y = min_y, max_y = max_y, title="Sample {} (data space)".format(traj_id), dim_to_show = dim_to_show,
 				add_to_plot = True, marker = '', color = cmap(3), linewidth = 3)
 			# Plot variance estimated over multiple samples from approx posterior
 			plot_std(self.ax_traj[traj_id], 
 				reconstructions_for_plotting[traj_id].unsqueeze(0), reconstr_std[traj_id].unsqueeze(0), 
-				time_steps_to_predict, alpha=0.5, color = cmap(3))
+				new_ts, alpha=0.5, color = cmap(3))
 			self.set_plot_lims(self.ax_traj[traj_id], "traj_" + str(traj_id))
 			
 			# Plot true posterior and approximate posterior
@@ -435,7 +439,7 @@ class Visualizations():
 		custom_labels = {}
 		for i in range(n_latent_dims):
 			col = cmap(i)
-			plot_trajectories(self.ax_latent_traj, latent_traj, time_steps_to_predict, 
+			plot_trajectories(self.ax_latent_traj, latent_traj, new_ts, 
 				title="Latent trajectories z(t) (latent space)", dim_to_show = i, color = col, 
 				marker = '', add_to_plot = True,
 				linewidth = 3)

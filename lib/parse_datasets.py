@@ -282,8 +282,8 @@ def parse_datasets(args, device):
 
 	##################################################################
 
-	if dataset_obj is None:
-		raise Exception("Unknown dataset: {}".format(dataset_name))
+	# if dataset_obj is None:
+	# 	raise Exception("Unknown dataset: {}".format(dataset_name))
 
 	if dataset_name == "periodic":
 		dataset = dataset_obj.sample_traj(time_steps_extrap, n_samples = args.n, 

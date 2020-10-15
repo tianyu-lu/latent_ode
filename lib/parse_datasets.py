@@ -74,37 +74,37 @@ from torchdiffeq import odeint_adjoint as odeint
 # Todo: 1. generalize training data to multiple initial conditions
 #       2. include at least one full cycle but irregularly sampled
 def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05):
-    # s0 = torch.tensor([[0.2,  0.1, 0.3, 0.1, 0.4, 0.5]]) # [m1 p1 m2 p2 m3 p3]
-    trajs = []
-    t = torch.linspace(0., 1000., 10000)
-    for _ in range(100):
-        s0 = 100*torch.rand(6).reshape(1,6)
-        with torch.no_grad():
-            s = odeint(Repressilator(), s0, t, method='dopri5')
-        trajs.append(s)
+    s0 = torch.tensor([[0.2,  0.1, 0.3, 0.1, 0.4, 0.5]]) # [m1 p1 m2 p2 m3 p3]
+    # trajs = []
+    # t = torch.linspace(0., 300., 3000)
+    # for _ in range(100):
+    #     s0 = 100*torch.rand(6).reshape(1,6)
+    #     with torch.no_grad():
+    #         s = odeint(Repressilator(), s0, t, method='dopri5')
+    #     trajs.append(s)
     # t = torch.linspace(0., 200., 2000)
-    # t = torch.linspace(0., 1000., 10000)
+    t = torch.linspace(0., 1000., 10000)
     # t = time_steps_extrap
 
-    # with torch.no_grad():
-    #     s = odeint(Repressilator(), s0, t, method='dopri5')
+    with torch.no_grad():
+        s = odeint(Repressilator(), s0, t, method='dopri5')
 
-    # s = s.squeeze()
-    # gfp = s[:,5]
-    # gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
+    s = s.squeeze()
+    gfp = s[:,5]
+    gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
 
     data = torch.zeros(n_samples, 100, 1)
 
     for i in range(n_samples):
-        rand_traj = int(random.random()*len(trajs))
-        s = trajs[rand_traj]
-        s = s.squeeze()
-        gfp = s[:,5]
-        gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
-        start = int(random.random()*(10000 - 2000))
-        gfp_data = gfp[start : start+2000]
-        data[i] = gfp_data[::20].reshape(-1,1)
-
+        # rand_traj = int(random.random()*len(trajs))
+        # s = trajs[rand_traj]
+        # s = s.squeeze()
+        # gfp = s[:,5]
+        # gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
+        start = int(random.random()*(10000 - 1000))
+        gfp_data = gfp[start : start+1000]
+        data[i] = gfp_data[::10].reshape(-1,1)
+    #torch.save(data, "gfp_data.pt")
     return data
 
 #####################################################################################################
@@ -300,8 +300,8 @@ def parse_datasets(args, device):
         dataset = dataset_obj.sample_traj(time_steps_extrap, n_samples = args.n, 
             noise_weight = args.noise_weight)
     elif dataset_name == "repressilator":
-        time_steps_extrap = torch.linspace(0., 100., 100)
-        dataset = sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05)
+        time_steps_extrap = torch.linspace(0., 5., 100)
+        dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05)
 
     # Process small datasets
     dataset = dataset.to(device)

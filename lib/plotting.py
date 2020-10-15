@@ -308,7 +308,7 @@ class Visualizations():
 	def draw_all_plots_one_dim(self, data_dict, model,
 		plot_name = "", save = False, experimentID = 0.):
 
-		data =  data_dict["data_to_predict"]
+		data_to_predict =  data_dict["data_to_predict"]
 		time_steps = data_dict["tp_to_predict"]
 		mask = data_dict["mask_predicted_data"]
 		
@@ -332,6 +332,7 @@ class Visualizations():
 
 		n_traj_to_show = 3
 		# plot only 10 trajectories
+		data_to_predict = data_to_predict[:n_traj_to_show]
 		data_for_plotting = observed_data[:n_traj_to_show]
 		mask_for_plotting = observed_mask[:n_traj_to_show]
 		reconstructions_for_plotting = reconstructions.mean(dim=0)[:n_traj_to_show]
@@ -349,6 +350,8 @@ class Visualizations():
 		# Plot reconstructions, true postrior and approximate posterior
 
 		cmap = plt.cm.get_cmap('Set1')
+		print(observed_time_steps)
+		print(time_steps)
 		for traj_id in range(3):
 			# Plot observations
 			plot_trajectories(self.ax_traj[traj_id], 
@@ -357,6 +360,11 @@ class Visualizations():
 				min_y = min_y, max_y = max_y, #title="True trajectories", 
 				marker = 'o', linestyle='', dim_to_show = dim_to_show,
 				color = cmap(2))
+			plot_trajectories(self.ax_traj[traj_id], 
+				data_to_predict[traj_id].unsqueeze(0), time_steps,
+				min_y = min_y, max_y = max_y, 
+				marker = 'o', linestyle='', dim_to_show = dim_to_show,
+				add_to_plot = True, color = "navajowhite")
 			# Plot reconstructions
 			plot_trajectories(self.ax_traj[traj_id],
 				reconstructions_for_plotting[traj_id].unsqueeze(0), new_ts, 

@@ -30,7 +30,8 @@ class LatentODE(VAE_Baseline):
 		linear_classifier = False,
 		classif_per_tp = False,
 		n_labels = 1,
-		train_classif_w_reconstr = False):
+		train_classif_w_reconstr = False,
+		znet = None):
 
 		super(LatentODE, self).__init__(
 			input_dim = input_dim, latent_dim = latent_dim, 
@@ -47,6 +48,7 @@ class LatentODE(VAE_Baseline):
 		self.diffeq_solver = diffeq_solver
 		self.decoder = decoder
 		self.use_poisson_proc = use_poisson_proc
+		self.znet = znet
 
 	def get_reconstruction(self, time_steps_to_predict, truth, truth_time_steps, 
 		mask = None, n_traj_samples = 1, run_backwards = True, mode = None):

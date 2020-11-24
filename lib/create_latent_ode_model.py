@@ -40,13 +40,13 @@ def create_LatentODE_model(args, input_dim, z0_prior, obsrv_std, device,
 			device = device).to(device)
 	else:
 		dim = args.latents 
-		ode_func_net = utils.create_net(dim, args.latents, 
+		znet = utils.create_net(dim, args.latents, 
 			n_layers = args.gen_layers, n_units = args.units, nonlinear = nn.Tanh)
 
 		gen_ode_func = ODEFunc(
 			input_dim = input_dim, 
 			latent_dim = args.latents, 
-			ode_func_net = ode_func_net,
+			ode_func_net = znet,
 			device = device).to(device)
 
 	z0_diffeq_solver = None
@@ -99,7 +99,7 @@ def create_LatentODE_model(args, input_dim, z0_prior, obsrv_std, device,
 		linear_classifier = args.linear_classif,
 		classif_per_tp = classif_per_tp,
 		n_labels = n_labels,
-		train_classif_w_reconstr = (args.dataset == "physionet")
-		).to(device)
+		train_classif_w_reconstr = (args.dataset == "physionet"),
+		znet = znet).to(device)
 
 	return model

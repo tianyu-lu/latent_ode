@@ -232,9 +232,15 @@ if __name__ == '__main__':
 
 	##################################################################
 	
+	num_batches = data_obj["n_train_batches"]
+
 	#Load checkpoint and evaluate the model
 	if args.load is not None:
 		utils.get_ckpt_model(ckpt_path, model, device)
+		# save the latent trajectories
+		for itr in range(1, num_batches):
+			batch_dict = utils.get_next_batch(data_obj["train_dataloader"])
+			viz.save_latents(batch_dict, model, itr)
 		exit()
 
 	##################################################################
@@ -247,8 +253,6 @@ if __name__ == '__main__':
 	logger.info(input_command)
 
 	optimizer = optim.Adamax(model.parameters(), lr=args.lr)
-
-	num_batches = data_obj["n_train_batches"]
 
 	for itr in range(1, num_batches * (args.niters + 1)):
 		optimizer.zero_grad()

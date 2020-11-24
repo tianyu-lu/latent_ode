@@ -109,11 +109,13 @@ def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05, sto
             data[i] = gfp_data[::10].reshape(-1,1)
     else:
         df = pd.read_csv("data/StochasticRepressilator.csv")
-        gfp = df["p3"]
+        gfp = torch.from_numpy(np.array(df["p3"]))
+        gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
         for i in range(n_samples):
             group = random.randint(1, 5)
-            start = int(random.random()*(10000 - 100)) * group
-            data[i] = gfp[start : start+100]
+            start = int(random.random()*(10000 - 1000)) * group
+            gfp_data = gfp[start : start+1000]
+            data[i] = gfp_data[::10].reshape(-1,1)
     return data
 
 #####################################################################################################

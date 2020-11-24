@@ -304,6 +304,35 @@ class Visualizations():
 		ax.contourf(xx, yy, density_grid, cmap=cmap2, alpha=0.3)
 	
 
+	def save_latents(self, data_dict, model, id):
+		data_to_predict =  data_dict["data_to_predict"]
+		time_steps = data_dict["tp_to_predict"]
+		mask = data_dict["mask_predicted_data"]
+		
+		observed_data =  data_dict["observed_data"]
+		observed_time_steps = data_dict["observed_tp"]
+		observed_mask = data_dict["observed_mask"]
+
+		device = get_device(time_steps)
+
+		time_steps_to_predict = time_steps
+		if isinstance(model, LatentODE):
+			# sample at the original time points
+			time_steps_to_predict = utils.linspace_vector(time_steps[0], time_steps[-1], 100).to(device)
+
+		new_ts = torch.cat((observed_time_steps, time_steps_to_predict), 0)
+
+		reconstructions, info = model.get_reconstruction(new_ts, 
+			observed_data, observed_time_steps, mask = observed_mask, n_traj_samples = 10)
+
+		# shape before [1, n_traj, n_tp, n_latent_dims]
+		n_traj_to_show = 10
+		latent_traj = info["latent_traj"][0,:n_traj_to_show]
+
+		latent_traj = latent_traj.cpu().numpy()
+		np.save("znet_{}.npy".format(id), latent_traj)
+
+
 
 	def draw_all_plots_one_dim(self, data_dict, model,
 		plot_name = "", save = False, experimentID = 0.):

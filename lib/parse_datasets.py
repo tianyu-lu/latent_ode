@@ -70,7 +70,42 @@ class Repressilator(nn.Module):
         out = self.W1 @ s.T + self.W2 @ H.T + self.b
         return out.reshape(1,6)
 
+class FitzHughNagumo(nn.Module):
+    def __init__(self, I_ext):
+        super(FitzHughNagumo, self).__init__()
+        self.p = torch.tensor([0.7, 0.8, 12.5])
+        self.I = I_ext
+
+    def forward(self, t, s):
+        v = s[0,0]
+        w = s[0,1]
+        a = self.p[0]
+        b = self.p[1]
+        tau = self.p[2]
+        return torch.tensor([[v - (v**3)/3 - w + self.I[int(t.item())],
+                              (v + a - b*w)/tau]])
+
 from torchdiffeq import odeint_adjoint as odeint
+
+def sample_fn(time_steps_extrap, n_samples = 1000):
+    data = torch.zeros(n_samples, 100, 2)
+    s0 = torch.tensor([[1.0, 0.0]])
+    t = torch.linspace(0., 1000., 10000)
+    I_ext = torch.tensor([0.3242, 0.3243, 0.3253, 0.3353, 0.4353,
+                      0.3242, 0.3243, 0.3253, 0.3353, 0.4353])
+    I_ext = I_ext.view(-1,1).repeat(1,101).view(-1,len(I_ext)*101).squeeze()
+    with torch.no_grad():
+        s = odeint(FitzHughNagumo(I_ext), s0, t, method='dopri5')
+    s = s.squeeze()
+    v = s[:,0]
+    v = 2*(v - torch.min(v)) / (torch.max(v) - torch.min(v))
+    for i in range(n_samples):
+        start = int(random.random()*(10000 - 1000))
+        v_data = v[start : start+1000]
+        v_data = v_data[::10].reshape(-1,1)
+        I_ext = 
+        data[i] = 
+
 
 # Todo: 1. generalize training data to multiple initial conditions
 #       2. include at least one full cycle but irregularly sampled
@@ -316,12 +351,19 @@ def parse_datasets(args, device):
     elif dataset_name == "repressilator-sde":
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, stochastic=True)
+    elif dataset_name == "fitzhugh-nagumo":
+        time_steps_extrap = torch.linspace(0., 5., 100)
+        dataset = sample_fn(time_steps_extrap, n_samples = args.n)
 
     # Process small datasets
     dataset = dataset.to(device)
     time_steps_extrap = time_steps_extrap.to(device)
 
-    train_y, test_y = utils.split_train_test(dataset, train_fraq = 0.8)
+    if dataset_name == "fitzhugh-nagumo":
+        # split by I_ext
+
+    else:
+        train_y, test_y = utils.split_train_test(dataset, train_fraq = 0.8)
 
     n_samples = len(dataset)
     input_dim = dataset.size(-1)

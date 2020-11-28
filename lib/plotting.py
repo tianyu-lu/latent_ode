@@ -379,8 +379,8 @@ class Visualizations():
 		# Plot reconstructions, true postrior and approximate posterior
 
 		cmap = plt.cm.get_cmap('Set1')
-		print(observed_time_steps)
-		print(time_steps)
+		# print(observed_time_steps)
+		# print(time_steps)
 		for traj_id in range(3):
 			# Plot observations
 			plot_trajectories(self.ax_traj[traj_id], 

@@ -467,6 +467,10 @@ class Visualizations():
 		# shape before [1, n_traj, n_tp, n_latent_dims]
 		# Take only the first sample from approx posterior
 		latent_traj = info["latent_traj"][0,:n_traj_to_show]
+		if save:
+			dirname = "znets/" + str(experimentID) + "/"
+			os.makedirs(dirname, exist_ok=True)
+			np.save(dirname + plot_name + ".npy", latent_traj.cpu().numpy().squeeze())
 		# shape before permute: [1, n_tp, n_latent_dims]
 
 		self.ax_latent_traj.cla()

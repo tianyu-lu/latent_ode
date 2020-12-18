@@ -142,11 +142,11 @@ def crz1ca2data(time_steps_extrap, n_samples = 1000):
 
 def potvintrottier(time_steps_extrap, n_samples = 1000):
     data = torch.zeros(n_samples, 100, 1)
-    potvin = np.genfromtxt("potvin.csv", delimiter=",") # shape is (1790,)
+    potvin = np.genfromtxt("data/potvin.csv", delimiter=",") # shape is (1790,)
     potvin = torch.from_numpy(potvin)
     for i in range(n_samples):
         randTime = int(random.random()*(potvin.shape[0] - 100))
-        data[i] = potvin[randExp, randTime:randTime+100].reshape(-1,1)
+        data[i] = potvin[randTime:randTime+100].reshape(-1,1)
     return data
 
 # Todo: 1. generalize training data to multiple initial conditions

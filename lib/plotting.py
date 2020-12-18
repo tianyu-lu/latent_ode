@@ -333,6 +333,31 @@ class Visualizations():
 		np.save("znet_{}.npy".format(id), latent_traj)
 
 
+	def save_fourier(self, data_dict, model, id, tend):
+		data_to_predict =  data_dict["data_to_predict"]
+		time_steps = data_dict["tp_to_predict"]
+		mask = data_dict["mask_predicted_data"]
+		
+		observed_data =  data_dict["observed_data"]
+		observed_time_steps = data_dict["observed_tp"]
+		observed_mask = data_dict["observed_mask"]
+
+		device = get_device(time_steps)
+
+		time_steps_to_predict = utils.linspace_vector(2.5253, tend, (tend-2.5253)*10).to(device)
+		new_ts = torch.cat((observed_time_steps, time_steps_to_predict), 0)
+		reconstructions, info = model.get_reconstruction(new_ts, 
+			observed_data, observed_time_steps, mask = observed_mask, n_traj_samples = 10)
+
+		recon_mean = reconstructions.mean(dim=0)
+		recon_std = reconstructions.std(dim=0)
+		print("recon mean shape: ")
+		print(recon_mean.shape)
+
+		for recon_batch in recon_mean:
+			recon_batch = recon_batch.cpu().numpy()
+			np.save("recon_{}.npy".format(id), recon_batch)
+
 
 	def draw_all_plots_one_dim(self, data_dict, model,
 		plot_name = "", save = False, experimentID = 0.):

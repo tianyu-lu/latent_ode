@@ -46,6 +46,7 @@ parser.add_argument('--viz', action='store_true', help="Show plots while trainin
 
 parser.add_argument('--save', type=str, default='experiments/', help="Path for save checkpoints")
 parser.add_argument('--load', type=str, default=None, help="ID of the experiment to load for evaluation. If None, run a new experiment.")
+parser.add_argument('--fourier',  type=float, default=None, help="Extrapolate for this many time steps, saves the trajectory for analysis.")
 parser.add_argument('-r', '--random-seed', type=int, default=1991, help="Random_seed")
 
 parser.add_argument('--dataset', type=str, default='periodic', help="Dataset to load. Available: physionet, activity, hopper, periodic")
@@ -237,7 +238,13 @@ if __name__ == '__main__':
 	#Load checkpoint and evaluate the model
 	if args.load is not None:
 		utils.get_ckpt_model(ckpt_path, model, device)
-		# save the latent trajectories
+		# do long extrapolation for fourier evaluation
+		if args.fourier is not None:
+			for itr in range(1, num_batches):
+				batch_dict = utils.get_next_batch(data_obj["train_dataloader"])
+				viz.save_fourier(batch_dict, model, itr, float(args.fourier))
+			exit()
+		# default: save the latent trajectories
 		for itr in range(1, num_batches):
 			batch_dict = utils.get_next_batch(data_obj["train_dataloader"])
 			viz.save_latents(batch_dict, model, itr)

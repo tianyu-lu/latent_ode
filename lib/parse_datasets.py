@@ -118,7 +118,7 @@ def crz1data(time_steps_extrap, n_samples = 1000):
     for i in range(n_samples):
         randExp = int(random.random()*(nExp))
         randTime = int(random.random()*(nTime - 100))
-        data[i] = crz1[randExp, randTime:randTime+100]
+        data[i] = crz1[randExp, randTime:randTime+100].reshape(-1,1)
     return data
 
 
@@ -126,18 +126,28 @@ def crz1ca2data(time_steps_extrap, n_samples = 1000):
     data = torch.zeros(n_samples, 100, 2)
     crz1 = np.genfromtxt("crz1_interp.csv", delimiter=",")  # shape is (601, 2190)
     crz1 = torch.from_numpy(crz1)
+    crz1 = 2*(crz1 - torch.min(crz1)) / (torch.max(crz1) - torch.min(crz1))
     ca2 = np.genfromtxt("ca_interp.csv", delimiter=",") # shape is (601, 2190)
     ca2 = torch.from_numpy(ca2)
+    ca2 = 2*(ca2 - torch.min(ca2)) / (torch.max(ca2) - torch.min(ca2))
     assert crz1.shape == ca2.shape
     nExp, nTime = crz1.shape
     for i in range(n_samples):
         randExp = int(random.random()*(nExp))
         randTime = int(random.random()*(nTime - 100))
-        crz1Data = crz1[randExp, randTime:randTime+100]
-        ca2Data = ca2[randExp, randTime:randTime+100]
+        crz1Data = crz1[randExp, randTime:randTime+100].reshape(-1,1)
+        ca2Data = ca2[randExp, randTime:randTime+100].reshape(-1,1)
         data[i] = torch.cat((crz1Data, ca2Data), dim=-1)
     return data
 
+def potvintrottier(time_steps_extrap, n_samples = 1000):
+    data = torch.zeros(n_samples, 100, 1)
+    potvin = np.genfromtxt("potvin.csv", delimiter=",") # shape is (1790,)
+    potvin = torch.from_numpy(potvin)
+    for i in range(n_samples):
+        randTime = int(random.random()*(potvin.shape[0] - 100))
+        data[i] = potvin[randExp, randTime:randTime+100].reshape(-1,1)
+    return data
 
 # Todo: 1. generalize training data to multiple initial conditions
 #       2. include at least one full cycle but irregularly sampled
@@ -184,8 +194,6 @@ def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05, sto
             gfp_data = gfp[start : start+1000]
             data[i] = gfp_data[::10].reshape(-1,1)
     return data
-
-def 
 
 #####################################################################################################
 def parse_datasets(args, device):
@@ -385,12 +393,18 @@ def parse_datasets(args, device):
     elif dataset_name == "repressilator-sde":
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, stochastic=True)
+    elif dataset_name == "potvin-trottier":
+        time_steps_extrap = torch.linspace(0., 5., 100)
+        dataset = potvintrottier(time_steps_extrap, n_samples = args.n)
     elif dataset_name == "fitzhugh-nagumo":
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = sample_fn(time_steps_extrap, n_samples = args.n)
     elif dataset_name == 'crz1':
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = crz1data(time_steps_extrap)
+    elif dataset_name == 'crz1ca2':
+        time_steps_extrap = torch.linspace(0., 5., 100)
+        dataset = crz1ca2data(time_steps_extrap)
 
     # Process small datasets
     dataset = dataset.to(device)

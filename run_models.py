@@ -45,8 +45,10 @@ parser.add_argument('-b', '--batch-size', type=int, default=50)
 parser.add_argument('--viz', action='store_true', help="Show plots while training")
 
 parser.add_argument('--save', type=str, default='experiments/', help="Path for save checkpoints")
-parser.add_argument('--load', type=str, default=None, help="ID of the experiment to load for evaluation. If None, run a new experiment.")
+parser.add_argument('--load', type=str, default=None, help="ID of the experiment to load for latent space evaluation. If None, run a new experiment.")
 parser.add_argument('--fourier',  type=float, default=None, help="Extrapolate for this many time steps, saves the trajectory for analysis.")
+parser.add_argument('--obs',  type=int, default=1, help="Number of observed species.")
+
 parser.add_argument('-r', '--random-seed', type=int, default=1991, help="Random_seed")
 
 parser.add_argument('--dataset', type=str, default='periodic', help="Dataset to load. Available: physionet, activity, hopper, periodic")

@@ -205,7 +205,7 @@ def sample_glyco(time_steps_extrap, n_samples = 1000, num_obs=1):
     for i in range(n_samples):
         start = int(random.random()*(1000 - 100))
         data[i] = gfp[start : start+100]
-        
+
     return data
 
 
@@ -250,36 +250,22 @@ def potvintrottier(time_steps_extrap, n_samples = 1000):
 
 # Todo: 1. generalize training data to multiple initial conditions
 #       2. include at least one full cycle but irregularly sampled
-def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05, stochastic=False):
+def sample_biotraj(time_steps_extrap, n_samples = 1000, noise_weight = 0.05, stochastic=False, num_obs = 1):
     
-    data = torch.zeros(n_samples, 100, 1)
+    data = torch.zeros(n_samples, 100, num_obs)
 
     if not stochastic:
         s0 = torch.tensor([[0.2,  0.1, 0.3, 0.1, 0.4, 0.5]]) # [m1 p1 m2 p2 m3 p3]
-        # trajs = []
-        # t = torch.linspace(0., 300., 3000)
-        # for _ in range(100):
-        #     s0 = 100*torch.rand(6).reshape(1,6)
-        #     with torch.no_grad():
-        #         s = odeint(Repressilator(), s0, t, method='dopri5')
-        #     trajs.append(s)
-        # t = torch.linspace(0., 200., 2000)
         t = torch.linspace(0., 1000., 10000)
-        # t = time_steps_extrap
 
         with torch.no_grad():
             s = odeint(Repressilator(), s0, t, method='dopri5')
 
         s = s.squeeze()
-        gfp = s[:,5]
-        gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
+        gfp = s[:,:num_obs]  # originally s[:,5]
+        gfp = 2*(gfp - torch.min(gfp, dim=0)) / (torch.max(gfp, dim=0) - torch.min(gfp, dim=0))
 
         for i in range(n_samples):
-            # rand_traj = int(random.random()*len(trajs))
-            # s = trajs[rand_traj]
-            # s = s.squeeze()
-            # gfp = s[:,5]
-            # gfp = 2*(gfp - torch.min(gfp)) / (torch.max(gfp) - torch.min(gfp))
             start = int(random.random()*(10000 - 1000))
             gfp_data = gfp[start : start+1000]
             data[i] = gfp_data[::10].reshape(-1,1)
@@ -488,7 +474,10 @@ def parse_datasets(args, device):
             noise_weight = args.noise_weight)
     elif dataset_name == "repressilator":
         time_steps_extrap = torch.linspace(0., 5., 100)
-        dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05)
+        dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, , num_obs = args.obs)
+    elif dataset_name == "glycolysis":
+        time_steps_extrap = torch.linspace(0., 5., 100)
+        dataset = sample_glyco(time_steps_extrap, n_samples = args.n, num_obs = args.obs)
     elif dataset_name == "repressilator-sde":
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, stochastic=True)

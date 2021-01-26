@@ -246,10 +246,12 @@ if __name__ == '__main__':
 				batch_dict = utils.get_next_batch(data_obj["train_dataloader"])
 				viz.save_fourier(batch_dict, model, itr, float(args.fourier))
 			exit()
-		# default: save the latent trajectories
+		# default: save the latent trajectories and get trained decoder weights
 		for itr in range(1, num_batches):
 			batch_dict = utils.get_next_batch(data_obj["train_dataloader"])
 			viz.save_latents(batch_dict, model, itr)
+			np.savetxt("decoder_weight.txt", model.decoder.decoder[0].weight.detach().cpu().numpy())
+			np.savetxt("decoder_bias.txt", model.decoder.decoder[0].bias.detach().cpu().numpy())
 		exit()
 
 	##################################################################

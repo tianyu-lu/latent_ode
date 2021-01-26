@@ -194,9 +194,9 @@ from scipy.integrate import odeint
 import numpy as np
 
 def sample_glyco(time_steps_extrap, n_samples = 1000, num_obs=1):
-    data = torch.zeros(n_samples, 100, num_obs)
+    data = np.zeros((n_samples, 100, num_obs))
     s0 = [2.475, 0.077, 1.187, 0.193, 0.050, 0.115, 0.077]
-    t = np.linspace(0, 20, 1000)
+    t = np.linspace(0, 40, 1000)
     s = odeint(glycolysis, s0, t)
 
     obs = s[:,:num_obs]
@@ -204,8 +204,8 @@ def sample_glyco(time_steps_extrap, n_samples = 1000, num_obs=1):
 
     for i in range(n_samples):
         start = int(random.random()*(1000 - 100))
-        data[i] = gfp[start : start+100]
-
+        data[i] = obs[start : start+100]
+    data = torch.from_numpy(data).type(torch.FloatTensor)
     return data
 
 
@@ -474,7 +474,7 @@ def parse_datasets(args, device):
             noise_weight = args.noise_weight)
     elif dataset_name == "repressilator":
         time_steps_extrap = torch.linspace(0., 5., 100)
-        dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, , num_obs = args.obs)
+        dataset = sample_biotraj(time_steps_extrap, n_samples = args.n, noise_weight = 0.05, num_obs = args.obs)
     elif dataset_name == "glycolysis":
         time_steps_extrap = torch.linspace(0., 5., 100)
         dataset = sample_glyco(time_steps_extrap, n_samples = args.n, num_obs = args.obs)
